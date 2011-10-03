@@ -146,6 +146,9 @@ hijack_log("      returned: %d", result);
 
     // check to see if hijack was already run, and if so, just continue on.
     if (argc >= 3 && 0 == strcmp(argv[2], "userdata")) {
+	char property[PROPERTY_VALUE_MAX];
+	int bptools_mode = 0;
+	if (property_get("ro.bootmode", property, NULL) > 0 && strcmp(property, "bp-tools") == 0) bptools_mode = 1;
 
 hijack_log("  Entering testing for hijacking!");
 
@@ -153,7 +156,7 @@ hijack_log("    hijack_mount(%s, %s, %s) executing...", "/system/bin/hijack", "/
             result = hijack_mount("/system/bin/hijack", "/dev/block/userdata", "/data");
 hijack_log("      returned: %d", result);
 
-        if (0 == stat(RECOVERY_MODE_FILE, &info)) {
+        if (0 == stat(RECOVERY_MODE_FILE, &info) || bptools_mode == 1) {
 
 hijack_log("  Recovery mode detected!");
 
@@ -226,12 +229,12 @@ hijack_log("      returned: %d", result);
 
 hijack_log("  Boot mode detected!");
 
-#ifdef LOG_ENABLE
+// #ifdef LOG_ENABLE
             // since we are in log mode we want to ensure we reboot to recovery in the event of failure
 hijack_log("    mark_file(%s) executing...", RECOVERY_MODE_FILE);
             result = mark_file(RECOVERY_MODE_FILE);
 hijack_log("      returned: %d", result);
-#endif
+// #endif
 
 hijack_log("    remount_root(%s, %d) executing...", "/system/bin/hijack", 1);
             result = remount_root("/system/bin/hijack", 1);
