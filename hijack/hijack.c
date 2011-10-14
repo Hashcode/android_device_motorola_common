@@ -144,11 +144,15 @@ hijack_log("    exec(\"%s %s\") executing...", LOG_DUMP_BINARY, LOG_PATH);
 hijack_log("      returned: %d", result);
 #endif
 
+    char property[PROPERTY_VALUE_MAX];
+    int hijacked = 0;
+    if (property_get("ro.hijacked", property, NULL) > 0 && strcmp(property, "1") == 0) hijacked = 1;
+    int bptools_mode = 0;
+    if (property_get("ro.bootmode", property, NULL) > 0 && strcmp(property, "bp-tools") == 0) bptools_mode = 1;
+
     // check to see if hijack was already run, and if so, just continue on.
-    if (argc >= 3 && 0 == strcmp(argv[2], "userdata")) {
-	char property[PROPERTY_VALUE_MAX];
-	int bptools_mode = 0;
-	if (property_get("ro.bootmode", property, NULL) > 0 && strcmp(property, "bp-tools") == 0) bptools_mode = 1;
+    if ( (bptools_mode == 1 || hijacked != 1) && (argc >= 3 && 0 == strcmp(argv[2], "userdata")) ) {
+
 
 hijack_log("  Entering testing for hijacking!");
 
@@ -156,8 +160,8 @@ hijack_log("    hijack_mount(%s, %s, %s) executing...", "/system/bin/hijack", "/
             result = hijack_mount("/system/bin/hijack", "/dev/block/userdata", "/data");
 hijack_log("      returned: %d", result);
 
+	property_set("ro.hijacked", "1");
         if (0 == stat(RECOVERY_MODE_FILE, &info) || bptools_mode == 1) {
-
 hijack_log("  Recovery mode detected!");
 
             // don't boot into recovery again
